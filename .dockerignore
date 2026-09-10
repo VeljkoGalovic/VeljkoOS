@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.env
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.claude
+.agents
+skills-lock.json
+README.md
+CLAUDE.md

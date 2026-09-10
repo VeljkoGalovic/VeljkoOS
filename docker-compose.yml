@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-veljko}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veljko}
+      POSTGRES_DB: ${POSTGRES_DB:-veljkoos}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # The api service waits on this. Without the gate, `alembic upgrade head`
+      # races Postgres initialisation and the first `up` fails on connection
+      # refused -- the usual reason a fresh compose stack appears broken.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veljko} -d ${POSTGRES_DB:-veljkoos}"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  api:
+    build: .
+    environment:
+      # Host is `db` here, not localhost: the api container resolves Postgres by
+      # compose service name on the shared network.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-veljko}:${POSTGRES_PASSWORD:-veljko}@db:5432/${POSTGRES_DB:-veljkoos}
+      APP_NAME: VeljkoOS Core
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
